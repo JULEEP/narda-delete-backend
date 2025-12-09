@@ -1,143 +1,31 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const { Schema } = mongoose;
-
-const userSchema = new Schema({
-  name: {
-    type: String,
-  },
-  email: {
-    type: String,
-    lowercase: true,
-  },
-    password: {
-    type: String,
-  },
-  mobile: {
-    type: String,
-  },
-  otp: {
-    type: String,
-  },
-      forgotOTP: { type: String, },
-  forgotOtpExpires: { type: Date, },
-  isForgotPasswordVerified: { type: Boolean, default: false },  // New field
-  otpExpires: {
-    type: Date,
-  },
-  myBookings: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'Booking',
-    },
-  ],
- wallet: [
+const userSchema = new mongoose.Schema(
   {
-    amount: {
-      type: Number,
+    name: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    email: { type: String, trim: true },
+    city: { type: String, trim: true },
+    password: { type: String, trim: true },
+    profilepic: { type: String },
+    state: { type: String },
+    otp: { type: String },
+    status: { type: String, default: "inactive" },
+    isBlocked: {
+      type: Boolean,
+      default: false,
     },
-    type: {
-      type: String,
-      enum: ['credit', 'debit'],
-    },
-    message: {
-      type: String,
-      default: ''
-    },
-    date: {
-      type: Date,
-      default: Date.now
-    },
-    transactionId: {
-      type: String, // Razorpay payment ID
-    }
-  }
-],
-totalWalletAmount: {
-  type: Number,
-  default: 0
-},
-  referredBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    terms: { type: Boolean },
+    language: { type: String },
+    bookmarks: { type: Array },
+    apptoken: { type: String, trim: true },
+    categories: { type: Array },
+    locations: { type: Array },
+    fcm_token: { type: String },
+    subscribedUser: { type: Boolean, default: false },
+    planExpiryDate: { type: Date, default: null },
   },
-  points: {
-    type: Number,
-    default: 0,
-  },
-  code: {
-    type: String,
-    default: null,
-  },
-  deleteToken: { type: String, default: null }, // This will store the deletion token
-  deleteTokenExpiration: { type: Date, default: null }, // This will store the expiration time of the token
-  profileImage: {
-    type: String,
-    default: 'default-profile-image.jpg',
-  },
+  { timestamps: true }
+);
 
-  // ✅ Moved location here (root level)
-  location: {
-    type: {
-      type: String,
-      enum: ['Point'],
-      default: 'Point',
-    },
-    coordinates: {
-      type: [Number], // [longitude, latitude]
-      default: [0, 0],
-    },
-  },
-
-  notifications: [
-    {
-      _id: { type: mongoose.Schema.Types.ObjectId, auto: true }, // automatic ObjectId generation
-      message: String,
-      type: String,
-      date: { type: Date, default: Date.now },
-    }
-  ],
-
- documents: {
-  aadharCard: {
-    type: new mongoose.Schema({
-      url: { type: String },
-      uploadedAt: { type: Date },
-      status: {
-        type: String,
-        enum: ['pending', 'approved', 'rejected', 'verified'],
-        default: 'pending',
-      },
-      extractedText: { type: String },
-      regexUsed: { type: String },
-      message: { type: String }
-    }, { _id: false }), // 👈 prevents nested _id
-    default: undefined // ✅ Important: allow this to be optional
-  },
-
-  drivingLicense: {
-    type: new mongoose.Schema({
-      url: { type: String },
-      uploadedAt: { type: Date },
-      status: {
-        type: String,
-        enum: ['pending', 'approved', 'rejected', 'verified'],
-        default: 'pending',
-      },
-      extractedText: { type: String },
-      regexUsed: { type: String },
-      message: { type: String }
-    }, { _id: false }), // 👈 prevents nested _id
-    default: undefined // ✅ Important: allow this to be optional
-  }
-},
-}, {
-  timestamps: true,
-});
-
-// ✅ Geo Index for geospatial queries
-userSchema.index({ location: '2dsphere' });
-
-const User = mongoose.model('User', userSchema);
-
-export default User;
+export default mongoose.model("admin", userSchema);

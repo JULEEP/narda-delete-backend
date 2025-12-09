@@ -32,52 +32,59 @@ const transporter = nodemailer.createTransport({
 export const deleteAccount = async (req, res) => {
   const { email, reason } = req.body;
 
-  // Validate email and reason
+  // Log incoming request email + reason
+  console.log(`📩 Delete request received from email: ${email}, reason: ${reason}`);
+
   if (!email || !reason) {
+    console.log("❌ Missing email or reason in request body");
     return res.status(400).json({ message: 'Email and reason are required' });
   }
 
   try {
-    // Find the user by email
     const user = await User.findOne({ email });
 
     if (!user) {
+      console.log(`❌ No user found with email: ${email}`);
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Generate a unique token for account deletion
+    // Generate deletion token
     const token = crypto.randomBytes(20).toString('hex');
     const deleteLink = `${process.env.BASE_URL}/confirm-delete-account/${token}`;
 
-    // Set the deleteToken and deleteTokenExpiration
     user.deleteToken = token;
-    user.deleteTokenExpiration = Date.now() + 3600000;  // Token expires in 1 hour
+    user.deleteTokenExpiration = Date.now() + 3600000; // 1 hr
 
-    // Log the user object before saving
-    console.log('User before saving:', user);
+    console.log("📝 User before saving:", user);
 
-    // Save the token and expiration time to the database
-    await user.save();  // This should now save the user along with the deleteToken and deleteTokenExpiration
+    await user.save();
 
-    // Log after saving to confirm
-    console.log('User after saving:', user);
+    console.log("💾 User after saving:", user);
 
-    // Send the confirmation email
+    // Send email
     const mailOptions = {
       from: 'pms226803@gmail.com',
       to: email,
       subject: 'Account Deletion Request Received',
-      text: `Hi ${user.name},\n\nWe have received your account deletion request. To confirm the deletion of your account, please click the link below:\n\n${deleteLink}\n\nReason: ${reason}\n\nIf you have any questions or need further assistance.\n\nBest regards,\nYour Team`,
+      text: `Hi ${user.name},\n\nWe received your account deletion request. 
+To confirm deletion, click below:\n\n${deleteLink}\n\nReason: ${reason}\n\nRegards,\nYour Team`,
     };
 
     await transporter.sendMail(mailOptions);
 
-    return res.status(200).json({
-      message: 'Account deletion request has been processed.We are send mail shortly.Please check your email and confirm the link to delete.',
-      token: token // Send the token in the response
-    });
+    // Response to send
+    const responsePayload = {
+      message: 'Account deletion request processed. Check your email for confirmation.',
+      requestedBy: email,
+      token: token
+    };
+
+    console.log("📤 Response sent to client:", responsePayload);
+
+    return res.status(200).json(responsePayload);
+
   } catch (err) {
-    console.error('Error in deleteAccount:', err);
+    console.error("🔥 Error in deleteAccount:", err);
     return res.status(500).json({ message: 'Something went wrong' });
   }
 };
